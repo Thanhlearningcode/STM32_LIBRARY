@@ -1,0 +1,104 @@
+; Author: NGUYEN VAN THANH
+; PA1 ADC1_1 ch1
+GPIOA_BASE      	EQU 0x40020000
+RCC_BASE			EQU 0x40023800
+RCC_APB2ENR			EQU RCC_BASE + 0x44
+RCC_AHB1ENR 		EQU GPIOA_BASE + 0x30
+ADC1_BASE 			EQU 0x40012000
+		AREA |.text|, CODE , READONLY, ALIGN=2
+		THUMB
+		ENTRY
+		EXPORT __main
+__main
+		BL PERIPHERALS 
+		BL ADC_READ
+PERIPHERALS 
+			LDR R0,=RCC_AHB1ENR 
+			LDR R1,[R0]
+			ORR R1,R1,#1<<0
+			STR R1,[R0]
+			
+			LDR R0,=RCC_APB2ENR
+			LDR R1,[R0]
+			ORR R1,R1,#1<<8
+			STR R1,[R0]
+			
+			LDR R0,=GPIOA_BASE + 0x00 ;MODER
+			LDR R1,[R0]
+			BIC R1,R1,#3<<2
+			ORR R1,R1,#3<<2 ; ANALOG MODE
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE + 0x04 ; CR1
+			LDR R1,[R0]
+			ORR R1,R1,#1<<0 ; ADC analog input Channel1
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE + 0x04; CR1
+			LDR R1,[R0]
+			ORR R1,R1,#1<<5 ; EOC ENABLE
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE + 0x08 ; CR2
+			LDR R1,[R0]
+			BIC R1,R1,#1<<1 ; SINGLE MODE
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE + 0x08
+			LDR R1,[R0]
+			ORR R1,R1,#1<<30
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE + 0x10
+			LDR R1,[R0]
+			ORR R1,R1,#3<<3 ; 56 CYCLES
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE+0x2C
+			LDR R1,[R0]
+			MOVW R1,#0 ; 0 CONVERSATION
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE + 0x34
+			LDR R1,[R0]
+			MOVW R1,#0   ; CHANEL1 
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE +0x34
+			LDR R1,[R0]
+			ORR R1,R1,#1<<0 ; 1 ST CONVASTION
+			STR R1,[R0]
+			
+			LDR R0,=ADC1_BASE + 0x04
+			
+			
+			
+			LDR R0,=ADC1_BASE + 0x08 ; CR2
+			LDR R1,[R0]
+			ORR R1,R1,#1<<0 ; ADC ON
+			STR R1,[R0]
+			BX LR
+ADC_READ
+			LDR R0,=ADC1_BASE +0x08
+			LDR R1,[R0]
+			ORR R1,R1,#1<<30 ; SW START 
+			STR R1,[R0]
+LOOP	
+			LDR R0,=ADC1_BASE +0x00 ; WHILE( !( ADC->SR>>2)&0x1) );
+			LDR R1,[R0]
+			AND R1,#0x02 ; wait conversation is complete
+			CMP R1,#0
+			BEQ LOOP
+			
+			LDR R2,=ADC1_BASE + 0x4C
+			STR R0,[R2]
+			BX LR
+			ALIGN 
+				END
+			
+			
+			
+			
+			
+			
+			
